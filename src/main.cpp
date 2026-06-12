@@ -12,8 +12,8 @@ const uint8_t PIN_DHT22       = 26; // Digital DHT
 const uint8_t PIN_WATER_LEVEL = 27; // Entrada Digital Boya
 
 // Pines de Actuadores (Relés de Bombas)
-const uint8_t PIN_WATER_PUMP      = 12; // Salida digital
-const uint8_t PIN_FERTILIZER_PUMP = 14; // Salida digital
+const uint8_t PIN_WATER_PUMP      = 14; // Salida digital — seguro, no es strapping pin
+const uint8_t PIN_FERTILIZER_PUMP = 13; // Salida digital — seguro, no es strapping pin
 
 // Instanciación única del Orquestador Global
 IrrigationController controller(
