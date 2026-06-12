@@ -1,0 +1,151 @@
+@startuml diagram
+skinparam classAttributeIconSize 0
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title Arquitectura AquaEdge: Ajuste Final de Componentes Físicos
+
+package "1. Estructuras de Lectura Inmutables (DTOs)" #E8F8F5 {
+    class LecturaHumedadSuelo <<struct>> {
+        + porcentaje : float
+        + valida : bool
+    }
+    class LecturaFertilidadSuelo <<struct>> {
+        + conductividad : float
+        + valida : bool
+    }
+    class LecturaTemperaturaSuelo <<struct>> {
+        + celsius : float
+        + valida : bool
+    }
+    class LecturaAmbiente <<struct>> {
+        + temperaturaAire : float
+        + humedadAire : float
+        + valida : bool
+    }
+    class LecturaLuz <<struct>> {
+        + luxes : float
+        + valida : bool
+    }
+    class LecturaNivelTanque <<struct>> {
+        + aguaDisponible : bool
+        + valida : bool
+    }
+    class EstadoCultivo <<struct>> {
+        + humSuelo : LecturaHumedadSuelo
+        + ferSuelo : LecturaFertilidadSuelo
+        + tempSuelo : LecturaTemperaturaSuelo
+        + ambiente : LecturaAmbiente
+        + luz : LecturaLuz
+        + nivel : LecturaNivelTanque
+    }
+}
+
+package "2. Diagnósticos y Comandos" #FADBD8 {
+    class DiagnosticoAgronomico <<struct>> {
+        + sueloSeco : bool
+        + nutrientesBajos : bool
+        + raizFria : bool
+        + ambienteCritico : bool
+        + tanqueVacio : bool
+    }
+    enum Comando {
+        ENCENDER_RIEGO
+        APAGAR_RIEGO
+        ENCENDER_NUTRIENTES
+        APAGAR_NUTRIENTES
+        APAGADO_EMERGENCIA
+    }
+}
+
+package "3. Capa de Hardware (Captación Real)" #F4F6F6 {
+    abstract class SensorBase {
+        # pin : int
+    }
+    class SensorHumedadSuelo {
+        ' Sensor Capacitivo v1.2
+        + leer() : LecturaHumedadSuelo
+    }
+    class SensorFertilidadSuelo {
+        ' Sensor Resistivo YL-69
+        + leer() : LecturaFertilidadSuelo
+    }
+    class SensorTemperaturaSuelo {
+        ' Sonda DS18B20
+        + leer() : LecturaTemperaturaSuelo
+    }
+    class SensorDHT22 {
+        ' Temperatura y Humedad Aire
+        + leer() : LecturaAmbiente
+    }
+    class SensorBH1750 {
+        ' Sensor de Luz I2C
+        + leer() : LecturaLuz
+    }
+    class SensorNivelAgua {
+        ' Boya Flotador
+        + leer() : LecturaNivelTanque
+    }
+
+    SensorHumedadSuelo -up-|> SensorBase
+    SensorFertilidadSuelo -up-|> SensorBase
+    SensorTemperaturaSuelo -up-|> SensorBase
+    SensorDHT22 -up-|> SensorBase
+    SensorBH1750 -up-|> SensorBase
+    SensorNivelAgua -up-|> SensorBase
+}
+
+package "4. Dominio Agronómico" #FEF9E7 {
+    class EvaluadorAgronomico {
+        + evaluar(estado: EstadoCultivo) : DiagnosticoAgronomico
+    }
+}
+
+package "5. Actuadores y Servicios" #FDF2E9 {
+    abstract class ActuadorBase {
+        # pin : int
+        + {abstract} ejecutar(cmd: Comando) : void
+    }
+    class BombaAgua {
+        + ejecutar(cmd: Comando) : void
+    }
+    class BombaFertilizante {
+        + ejecutar(cmd: Comando) : void
+    }
+    class ClienteTelemetria {
+        + enviar(estado: EstadoCultivo) : void
+    }
+
+    BombaAgua -up-|> ActuadorBase
+    BombaFertilizante -up-|> ActuadorBase
+}
+
+package "6. Orquestador (El Mediador Tonto)" #EAF2F8 {
+    class ControladorRiego {
+        - _sHumedad : SensorHumedadSuelo
+        - - _sFertilidad : SensorFertilidadSuelo
+        - _sTempSuelo : SensorTemperaturaSuelo
+        - _sDHT22 : SensorDHT22
+        - _sBH1750 : SensorBH1750
+        - _sNivel : SensorNivelAgua
+        - _evaluador : EvaluadorAgronomico
+        - _bAgua : BombaAgua
+        - _bFertilizante : BombaFertilizante
+        - _telemetria : ClienteTelemetria
+        + tick() : void
+    }
+}
+
+ControladorRiego *-- SensorHumedadSuelo
+ControladorRiego *-- SensorFertilidadSuelo
+ControladorRiego *-- SensorTemperaturaSuelo
+ControladorRiego *-- SensorDHT22
+ControladorRiego *-- SensorBH1750
+ControladorRiego *-- SensorNivelAgua
+ControladorRiego *-- EvaluadorAgronomico
+ControladorRiego *-- BombaAgua
+ControladorRiego *-- BombaFertilizante
+ControladorRiego *-- ClienteTelemetria
+
+@enduml
