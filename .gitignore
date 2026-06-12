@@ -1,0 +1,29 @@
+# --- Carpetas temporales de PlatformIO ---
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# --- Configuraciones locales de VS Code ---
+.vscode/.provider*
+.vscode/extensions.json
+.vscode/c_cpp_properties.json
+.vscode/.browse.c_cpp.db*
+.vscode/launch.json
+.vscode/ipch
+
+# --- Archivos del sistema y compilación ---
+*.bcf
+*.bin
+*.elf
+*.hex
+
+# --- Archivos de entorno y credenciales (¡No subir contraseñas de WiFi!) ---
+.env
+.env.*
+secrets.h
+
+# --- Temporales de Sistemas Operativos ---
+.DS_Store
+Thumbs.db

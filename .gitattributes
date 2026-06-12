@@ -1,0 +1,20 @@
+# Forzar a que la normalización automática use LF al guardar
+* text=auto eol=lf
+
+# Scripts de Linux se quedan en LF
+*.sh text eol=lf
+
+# Archivos de consola de Windows OBLIGATORIAMENTE en CRLF (si no, fallan en Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Archivos de tu proyecto de ESP32 y Webapp (Todos forzados a LF)
+*.cpp text eol=lf
+*.h text eol=lf
+*.ino text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+platformio.ini text eol=lf
