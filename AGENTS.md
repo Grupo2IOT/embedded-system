@@ -47,5 +47,12 @@ Declared in `platformio.ini`:
 
 ## Hardware Notes
 - **GPIO mapping** is centralized in `src/main.cpp`. Do not scatter pin numbers across classes.
+- **Current assignments** (see also `docs/hardware.md`): water pump GPIO 14, fertilizer pump GPIO 13. Both are safe outputs (not strapping pins). GPIO 12 was previously used but has been moved because it is a strapping pin.
 - **ADC calibration constants** live in sensor headers (`AIR_VALUE`, `WATER_VALUE`, `MAX_RESISTANCE`, `MIN_RESISTANCE`). These are device-specific and require physical calibration.
 - **Serial**: `Serial.begin(115200)` is the only diagnostic output channel right now.
+
+## Documentation References
+- `README.md` — User-facing overview, hardware table, build/run instructions.
+- `docs/hardware.md` — Formal BOM, SKU-to-code mappings, wiring notes (pull-up/down requirements, pin-selection rationale).
+- `docs/class-diagram.puml` — PlantUML class diagram (Spanish names, English identifiers).
+- `TODO.md` — Active technical-debt checklist before hardware deployment.

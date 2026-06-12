@@ -4,7 +4,7 @@ top to bottom direction
 skinparam packageStyle rectangle
 skinparam shadowing false
 
-title Arquitectura AquaEdge: Ajuste Final de Componentes Físicos
+title Arquitectura AquaEdge: Componentes Actuales
 
 package "1. Estructuras de Lectura Inmutables (DTOs)" #E8F8F5 {
     class LecturaHumedadSuelo <<struct>> {
@@ -24,10 +24,6 @@ package "1. Estructuras de Lectura Inmutables (DTOs)" #E8F8F5 {
         + humedadAire : float
         + valida : bool
     }
-    class LecturaLuz <<struct>> {
-        + luxes : float
-        + valida : bool
-    }
     class LecturaNivelTanque <<struct>> {
         + aguaDisponible : bool
         + valida : bool
@@ -37,25 +33,22 @@ package "1. Estructuras de Lectura Inmutables (DTOs)" #E8F8F5 {
         + ferSuelo : LecturaFertilidadSuelo
         + tempSuelo : LecturaTemperaturaSuelo
         + ambiente : LecturaAmbiente
-        + luz : LecturaLuz
         + nivel : LecturaNivelTanque
     }
 }
 
 package "2. Diagnósticos y Comandos" #FADBD8 {
     class DiagnosticoAgronomico <<struct>> {
-        + sueloSeco : bool
-        + nutrientesBajos : bool
-        + raizFria : bool
-        + ambienteCritico : bool
-        + tanqueVacio : bool
+        + requiereRiego : bool
+        + requiereFertilizacion : bool
+        + mensajeAlerta : const char*
     }
     enum Comando {
+        NONE
         ENCENDER_RIEGO
         APAGAR_RIEGO
         ENCENDER_NUTRIENTES
         APAGAR_NUTRIENTES
-        APAGADO_EMERGENCIA
     }
 }
 
@@ -64,11 +57,11 @@ package "3. Capa de Hardware (Captación Real)" #F4F6F6 {
         # pin : int
     }
     class SensorHumedadSuelo {
-        ' Sensor Capacitivo v1.2
+        ' Sensor Capacitivo HW-390
         + leer() : LecturaHumedadSuelo
     }
     class SensorFertilidadSuelo {
-        ' Sensor Resistivo YL-69
+        ' Sensor Resistivo YL-69 (proxy de conductividad)
         + leer() : LecturaFertilidadSuelo
     }
     class SensorTemperaturaSuelo {
@@ -79,10 +72,6 @@ package "3. Capa de Hardware (Captación Real)" #F4F6F6 {
         ' Temperatura y Humedad Aire
         + leer() : LecturaAmbiente
     }
-    class SensorBH1750 {
-        ' Sensor de Luz I2C
-        + leer() : LecturaLuz
-    }
     class SensorNivelAgua {
         ' Boya Flotador
         + leer() : LecturaNivelTanque
@@ -92,7 +81,6 @@ package "3. Capa de Hardware (Captación Real)" #F4F6F6 {
     SensorFertilidadSuelo -up-|> SensorBase
     SensorTemperaturaSuelo -up-|> SensorBase
     SensorDHT22 -up-|> SensorBase
-    SensorBH1750 -up-|> SensorBase
     SensorNivelAgua -up-|> SensorBase
 }
 
@@ -124,10 +112,9 @@ package "5. Actuadores y Servicios" #FDF2E9 {
 package "6. Orquestador (El Mediador Tonto)" #EAF2F8 {
     class ControladorRiego {
         - _sHumedad : SensorHumedadSuelo
-        - - _sFertilidad : SensorFertilidadSuelo
+        - _sFertilidad : SensorFertilidadSuelo
         - _sTempSuelo : SensorTemperaturaSuelo
         - _sDHT22 : SensorDHT22
-        - _sBH1750 : SensorBH1750
         - _sNivel : SensorNivelAgua
         - _evaluador : EvaluadorAgronomico
         - _bAgua : BombaAgua
@@ -141,7 +128,6 @@ ControladorRiego *-- SensorHumedadSuelo
 ControladorRiego *-- SensorFertilidadSuelo
 ControladorRiego *-- SensorTemperaturaSuelo
 ControladorRiego *-- SensorDHT22
-ControladorRiego *-- SensorBH1750
 ControladorRiego *-- SensorNivelAgua
 ControladorRiego *-- EvaluadorAgronomico
 ControladorRiego *-- BombaAgua

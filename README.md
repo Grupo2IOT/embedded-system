@@ -4,7 +4,7 @@ AquaEdge is an ESP32-based smart irrigation controller that monitors soil and en
 
 ## What it does
 
-- Reads soil moisture, soil fertility (EC), soil temperature, air temperature/humidity, and water tank level.
+- Reads soil moisture (capacitive), soil resistivity proxy (YL-69), soil temperature, air temperature/humidity, and water tank level.
 - Evaluates the crop state every 5 seconds.
 - Automatically turns the water and/or fertilizer pumps on or off based on thresholds.
 - Prevents pumps from running if the water tank is empty (hard safety short-circuit).
@@ -12,15 +12,15 @@ AquaEdge is an ESP32-based smart irrigation controller that monitors soil and en
 
 ## Hardware
 
-| Component | Pin | Role |
-|-----------|-----|------|
-| Capacitive soil moisture sensor | GPIO 32 (ADC1) | Soil moisture % |
-| Resistive soil fertility sensor (YL-69) | GPIO 34 (ADC1) | Electrical conductivity proxy |
-| DS18B20 soil temperature probe | GPIO 25 (OneWire) | Soil temperature |
-| DHT22 | GPIO 26 | Air temperature & humidity |
-| Water level float switch | GPIO 27 | Tank level (digital) |
-| Water pump relay | GPIO 12 | Water pump on/off |
-| Fertilizer pump relay | GPIO 14 | Fertilizer pump on/off |
+| Component | Pin | Role | Notes |
+|-----------|-----|------|-------|
+| HW-390 capacitive moisture | GPIO 32 (ADC1) | Soil moisture % | Primary source of truth |
+| YL-69 resistive sensor | GPIO 34 (ADC1) | Resistivity proxy (moisture + ions) | Correlated secondary reading |
+| DS18B20 soil temperature | GPIO 25 (OneWire) | Soil temperature | Primary |
+| DHT22 | GPIO 26 | Air temperature & humidity | Primary |
+| Water level float switch | GPIO 27 | Tank level (digital) | Primary |
+| Water pump relay | GPIO 14 | Water pump on/off | Safe digital output |
+| Fertilizer pump relay | GPIO 13 | Fertilizer pump on/off | Safe digital output |
 
 Board: **ESP32-DevKit** (see `platformio.ini` for exact environment).
 
@@ -69,7 +69,7 @@ pio run --target clean
 The ADC-based sensors (soil moisture and fertility) use device-specific constants stored in their headers. You must calibrate them against your actual hardware and soil:
 
 - **SoilMoistureSensor.h** (`AIR_VALUE`, `WATER_VALUE`): measure raw ADC values in dry air and fully submerged in water.
-- **SoilFertilitySensor.h** (`MAX_RESISTANCE`, `MIN_RESISTANCE`): measure raw ADC values in distilled water (low nutrients) and nutrient-rich water (high nutrients).
+- **SoilFertilitySensor.h** (`MAX_RESISTANCE`, `MIN_RESISTANCE`): measure raw ADC values in dry soil (high resistance) and fully saturated soil (low resistance). Note: the YL-69 cannot isolate nutrients from moisture; it measures total resistivity. Calibrate against your actual soil conditions.
 
 ## Safety
 
