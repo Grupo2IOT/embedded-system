@@ -39,6 +39,8 @@ A PlantUML class diagram is available in `docs/class-diagram.puml`.
 
 ## Quick start
 
+**New to hardware integration?** See `docs/GETTING_STARTED.md` for the step-by-step guide (dry flash → add one sensor → calibrate → add the rest).
+
 Requirements:
 - [PlatformIO Core](https://platformio.org/install/cli) (or the PlatformIO IDE extension for VS Code)
 - ESP32-DevKit board

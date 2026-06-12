@@ -2,6 +2,8 @@
 
 This file tracks known issues and planned improvements before hardware deployment.
 
+**For the step-by-step hardware integration guide, see `docs/GETTING_STARTED.md`.** This file tracks code-level improvements and technical debt.
+
 ## Hardware & Wiring
 
 - [x] **Move water pump relay off GPIO 12** — Water pump moved to GPIO 14, fertilizer pump to GPIO 13. Both are safe digital outputs. Reviewed in `temp.md`.
