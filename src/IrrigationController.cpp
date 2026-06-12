@@ -22,7 +22,6 @@ void IrrigationController::begin() {
     _waterLevelSensor.begin();
     
     _waterPump.begin();
-    _fertilitySensor.begin(); // Inicialización preventiva del pin analógico alterno
     _fertilizerPump.begin();
     _telemetry.begin();
 }
