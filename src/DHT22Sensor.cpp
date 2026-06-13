@@ -16,10 +16,6 @@ EnvironmentReading DHT22Sensor::read() {
     float h = dhtInstance.readHumidity();
     float t = dhtInstance.readTemperature(); // Por defecto lee en Celsius
 
-    // 1.5 DEBUG: Imprimir valores crudos para diagnosticar DHT22
-    Serial.print("[DHT22 DEBUG] h="); Serial.print(h);
-    Serial.print(" t="); Serial.println(t);
-
     // 2. Validación de Hardware: Si el cable de datos del DHT22 se desconecta,
     // la librería no devuelve un número, devuelve un estado eléctrico flotante "NaN"
     if (std::isnan(h) || std::isnan(t) || h < 0.0f || h > 100.0f || t < -40.0f || t > 80.0f) {
