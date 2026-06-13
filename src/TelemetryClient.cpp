@@ -12,9 +12,9 @@ void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& dia
     
     // Volcado de Sensores usando tus campos en inglés
     if (state.soilMoisture.isValid) {
-        Serial.print("  > Soil Moisture: "); Serial.print(state.soilMoisture.percentage); Serial.println("%");
+        Serial.print("  > Soil Moisture: "); Serial.print(state.soilMoisture.percentage); Serial.print("% (raw: "); Serial.print(state.soilMoisture.rawValue); Serial.println(")");
     } else {
-        Serial.println("  > Soil Moisture: [HARDWARE_ERROR]");
+        Serial.print("  > Soil Moisture: [HARDWARE_ERROR] (raw: "); Serial.print(state.soilMoisture.rawValue); Serial.println(")");
     }
 
     if (state.soilFertility.isValid) {

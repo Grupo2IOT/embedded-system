@@ -13,6 +13,7 @@ SoilMoistureReading SoilMoistureSensor::read() {
     
     // 1. Leer el valor analógico crudo del ADC (0 - 4095)
     int rawValue = analogRead(pin);
+    reading.rawValue = rawValue; // Guardar el valor crudo para calibración
 
     // 2. Validación de Hardware: Si el cable se desconecta, el ADC suele flotar a 0 o 4095
     if (rawValue < 500 || rawValue > 4050) {

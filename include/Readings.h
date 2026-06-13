@@ -5,6 +5,7 @@
 
 struct SoilMoistureReading {
     float percentage;
+    int rawValue; // ADC crudo (0–4095) para calibración y debugging
     bool isValid; // True si el sensor capacitivo está respondiendo correctamente
 };
 
