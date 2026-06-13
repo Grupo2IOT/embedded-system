@@ -8,7 +8,7 @@ This document is the starting point for anyone taking the project from code to p
 - PlatformIO installed (`pio` command available)
 - USB cable and ESP32 board
 
-## Phase 1: Dry Flash (No sensors attached)
+## Phase 1: Dry Flash (No sensors attached) ✅
 
 Goal: confirm the build chain, board, and Serial connection work.
 
@@ -24,7 +24,17 @@ Goal: confirm the build chain, board, and Serial connection work.
    ```bash
    pio device monitor --baud 115200
    ```
-4. Verify the `[SYSTEM READY]` message appears. If not, check the USB cable, port selection, or baud rate.
+   > **Note:** `platformio.ini` now sets `monitor_dtr = 0` and `monitor_rts = 0` to prevent the serial monitor from toggling reset lines when it opens. This avoids the boot-loop spam (`try 0x400...`) that appeared when using `upload && monitor`.
+4. If the monitor was opened after the board already booted, press the **EN (Reset)** button on the ESP32 to trigger a clean reboot.
+5. Verify the `[SYSTEM READY]` message appears. If not, check the USB cable, port selection, or baud rate.
+
+**Expected output in Phase 1:**
+```
+[SYSTEM START] Inicializando AquaEdge Core...
+[SYSTEM READY] Orquestador corriendo de forma asíncrona.
+[INFO] Modo dry-flash: sensores desconectados son normales en Phase 1.
+```
+Telemetry packets will appear every 30 seconds with all sensors showing `[HARDWARE_ERROR]` — this is normal with no sensors attached.
 
 ## Phase 2: Add One Real Sensor (HW-390 recommended)
 
@@ -129,4 +139,4 @@ The `YL-69` / `FC-28` is a **resistive soil moisture sensor**, not a true electr
 1. Read `docs/hardware.md` for the full BOM and wiring rationale.
 2. Read `README.md` for the build/run commands and architecture overview.
 3. Read `TODO.md` for code-level improvements (averaging, debouncing, watchdog) that are not blockers for hardware integration.
-4. Do **Phase 1** now. Confirm the board works.
+4. Proceed to **Phase 2** now — connect the HW-390 and calibrate `AIR_VALUE` / `WATER_VALUE` in `include/SoilMoistureSensor.h`.

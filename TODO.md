@@ -14,7 +14,11 @@ This file tracks known issues and planned improvements before hardware deploymen
 
 - [ ] **Add ADC multi-sample averaging** — `SoilMoistureSensor` and `SoilFertilitySensor` take a single `analogRead()`. Add 10–20 sample averaging with outlier rejection to reduce noise and false `isValid = false` triggers.
 - [ ] **Add float switch debouncing** — `WaterLevelSensor` reads the digital pin once. Mechanical float switches bounce. Require the pin to be stable for 100–200 ms before declaring a state change.
-- [ ] **Add watchdog timer feed** — If any sensor library (e.g., DHT22) blocks or hangs, the irrigation loop stalls. Feed the ESP32 task watchdog in `loop()` and add a timeout recovery path.
+- [x] **Fix Phase 1 dry-flash boot loop** — ESP32 reset repeatedly when DS18B20 was missing. Fixed by detecting `getDeviceCount() == 0` in `SoilTemperatureSensor::begin()` and skipping `requestTemperatures()` in `read()`.
+- [x] **Fix floating water-level pin** — Changed `WaterLevelSensor::begin()` from `INPUT` to `INPUT_PULLDOWN` to prevent false state changes when the float switch is open.
+- [x] **Fix serial monitor reset loop** — Added `monitor_dtr = 0` and `monitor_rts = 0` to `platformio.ini` to prevent `pio device monitor` from toggling the ESP32 reset lines after upload.
+- [x] **Add watchdog timer feed** — `yield()` added between each `begin()` call in `IrrigationController`. `SoilTemperatureSensor` now detects missing DS18B20 and skips blocking `requestTemperatures()` to avoid 750ms watchdog stalls.
+- [ ] **Add watchdog timer feed in `loop()`** — If a sensor library hangs during the main `tick()`, the loop still stalls. Add `yield()` inside `tick()` or move sensor reads to a FreeRTOS task.
 
 ## Calibration & Config
 
