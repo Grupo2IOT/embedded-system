@@ -19,6 +19,7 @@ This file tracks known issues and planned improvements before hardware deploymen
 - [x] **Fix serial monitor reset loop** — Added `monitor_dtr = 0` and `monitor_rts = 0` to `platformio.ini` to prevent `pio device monitor` from toggling the ESP32 reset lines after upload.
 - [x] **Add watchdog timer feed** — `yield()` added between each `begin()` call in `IrrigationController`. `SoilTemperatureSensor` now detects missing DS18B20 and skips blocking `requestTemperatures()` to avoid 750ms watchdog stalls.
 - [ ] **Add watchdog timer feed in `loop()`** — If a sensor library hangs during the main `tick()`, the loop still stalls. Add `yield()` inside `tick()` or move sensor reads to a FreeRTOS task.
+- [x] **Add raw ADC value to moisture telemetry** — `SoilMoistureReading` now includes `rawValue` (0–4095) which is printed in telemetry packets. This helps calibration without requiring temporary debug prints.
 
 ## Calibration & Config
 

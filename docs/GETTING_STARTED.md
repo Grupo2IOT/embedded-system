@@ -36,7 +36,7 @@ Goal: confirm the build chain, board, and Serial connection work.
 ```
 Telemetry packets will appear every 30 seconds with all sensors showing `[HARDWARE_ERROR]` — this is normal with no sensors attached.
 
-## Phase 2: Add One Real Sensor (HW-390 recommended)
+## Phase 2: Add One Real Sensor (HW-390 recommended) ✅
 
 Goal: understand what real data looks like before simulating anything.
 
@@ -47,7 +47,7 @@ Goal: understand what real data looks like before simulating anything.
 Steps:
 1. Connect the HW-390 capacitive soil moisture sensor to **GPIO 32** (ADC1).
 2. Flash the same firmware.
-3. Open Serial telemetry and observe the raw ADC value.
+3. Open Serial telemetry and observe the raw ADC value (printed as `raw: <value>` in the telemetry packet).
 4. Record the raw ADC value in:
    - **Dry air** → this will become your `AIR_VALUE` calibration constant.
    - **Fully submerged in water** → this will become your `WATER_VALUE` calibration constant.
@@ -55,16 +55,20 @@ Steps:
 
 > ⚠️ **Do not skip this phase.** If you add simulation mode before verifying real hardware, you risk validating your evaluator logic against fake data that does not match reality. Phase 2 is the foundation for everything that follows.
 
-## Phase 3: Add Remaining Sensors (One by one)
+> **Tip:** The telemetry packet now prints the raw ADC value alongside the percentage. Use this to verify your sensor is working before you even write the calibration constants.
+
+## Phase 3: Add Remaining Sensors (One by one) ✅
 
 Add the next sensor only after the previous one is verified and stable.
 
-| Sensor | Pin | Prerequisites | Why add in this order |
-|--------|-----|---------------|----------------------|
-| DHT22 | GPIO 26 | Adafruit DHT library installed | No external resistors needed |
-| DS18B20 | GPIO 25 | OneWire + DallasTemperature libraries, **4.7kΩ pull-up resistor** between data and 3.3V | Required for soil temperature; if you forget the pull-up you get -127°C |
-| YL-69 | GPIO 34 | Raw ADC; no libraries | Measures resistivity (moisture + ions). Used as a **correlated proxy** alongside the HW-390. See the YL-69 note below. |
-| Float switch (SB-3510LW) | GPIO 27 | Physical pull-down resistor (or `INPUT_PULLDOWN`) | Prevents floating pin when switch is open |
+| Sensor | Pin | Prerequisites | Status |
+|--------|-----|---------------|--------|
+| DHT22 | GPIO 26 | Adafruit DHT library installed | ✅ Working (protoboard bridge issue resolved) |
+| DS18B20 | GPIO 25 | OneWire + DallasTemperature libraries, **4.7kΩ pull-up resistor** between data and 3.3V | Next |
+| YL-69 | GPIO 34 | Raw ADC; no libraries | Pending |
+| Float switch (SB-3510LW) | GPIO 27 | Physical pull-down resistor (or `INPUT_PULLDOWN`) | Pending |
+
+**Troubleshooting tip:** If a sensor that works alone shows `[HARDWARE_ERROR]` when combined with others, check your **protoboard bridges**. The +/− rails on many protoboards are split in the middle — a missing bridge on the power rail can cause the sensor to appear unconnected even though the data wire is fine.
 
 ## Phase 4: Add Actuators
 
@@ -139,4 +143,4 @@ The `YL-69` / `FC-28` is a **resistive soil moisture sensor**, not a true electr
 1. Read `docs/hardware.md` for the full BOM and wiring rationale.
 2. Read `README.md` for the build/run commands and architecture overview.
 3. Read `TODO.md` for code-level improvements (averaging, debouncing, watchdog) that are not blockers for hardware integration.
-4. Proceed to **Phase 2** now — connect the HW-390 and calibrate `AIR_VALUE` / `WATER_VALUE` in `include/SoilMoistureSensor.h`.
+4. Proceed to **Phase 3** — add the DS18B20 (soil temperature) with a **4.7kΩ pull-up resistor** on GPIO 25.

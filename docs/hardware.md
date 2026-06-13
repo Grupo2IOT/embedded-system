@@ -22,6 +22,7 @@ This document lists every physical component used by the AquaEdge firmware.
 
 - **YL-69 is NOT a true EC/fertility meter.** It measures resistance between two probes, which is dominated by soil moisture with a secondary contribution from dissolved ions (salinity/nutrients). It is used as a *correlated proxy* alongside the HW-390 capacitive sensor. When both agree, confidence is high. When they disagree, it flags a potential anomaly (sensor failure or extremely low-ion wet soil).
 - **ADC calibration required** for both soil sensors. See `README.md` Calibration section.
+- **Raw ADC values are printed in telemetry** for the HW-390 (`SoilMoistureReading.rawValue`). Use this to calibrate `AIR_VALUE` and `WATER_VALUE` without needing a separate test sketch.
 
 ## Actuators
 

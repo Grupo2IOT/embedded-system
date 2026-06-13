@@ -70,7 +70,7 @@ pio run --target clean
 
 The ADC-based sensors (soil moisture and fertility) use device-specific constants stored in their headers. You must calibrate them against your actual hardware and soil:
 
-- **SoilMoistureSensor.h** (`AIR_VALUE`, `WATER_VALUE`): measure raw ADC values in dry air and fully submerged in water.
+- **SoilMoistureSensor.h** (`AIR_VALUE`, `WATER_VALUE`): measure raw ADC values in dry air and fully submerged in water. The telemetry packet prints the raw ADC value alongside the percentage to simplify calibration.
 - **SoilFertilitySensor.h** (`MAX_RESISTANCE`, `MIN_RESISTANCE`): measure raw ADC values in dry soil (high resistance) and fully saturated soil (low resistance). Note: the YL-69 cannot isolate nutrients from moisture; it measures total resistivity. Calibrate against your actual soil conditions.
 
 ## Safety

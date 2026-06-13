@@ -49,6 +49,7 @@ Declared in `platformio.ini`:
 - **GPIO mapping** is centralized in `src/main.cpp`. Do not scatter pin numbers across classes.
 - **Current assignments** (see also `docs/hardware.md`): water pump GPIO 14, fertilizer pump GPIO 13. Both are safe outputs (not strapping pins). GPIO 12 was previously used but has been moved because it is a strapping pin.
 - **ADC calibration constants** live in sensor headers (`AIR_VALUE`, `WATER_VALUE`, `MAX_RESISTANCE`, `MIN_RESISTANCE`). These are device-specific and require physical calibration.
+- **Raw ADC values** are included in the `SoilMoistureReading` DTO (`rawValue` field, 0–4095) and printed in telemetry packets. This is a permanent diagnostic feature, not temporary debug logging.
 - **Serial**: `Serial.begin(115200)` is the only diagnostic output channel right now.
 
 ## Documentation References
