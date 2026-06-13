@@ -31,7 +31,7 @@ private:
     unsigned long _lastTick;
     unsigned long _lastTelemetry;
     const unsigned long TICK_INTERVAL = 5000; // Ejecutar ciclo cada 5 segundos (5000ms)
-    const unsigned long TELEMETRY_INTERVAL = 30000; // Reportar telemetría cada 30 segundos
+    const unsigned long TELEMETRY_INTERVAL = 5000; // Reportar telemetría cada 5 segundos
 
 public:
     // El constructor recibe los mapeos de pines asignados de todo el sistema
