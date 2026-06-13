@@ -66,7 +66,10 @@ void IrrigationController::tick() {
             _fertilizerPump.execute(Command::TURN_OFF_FERTILIZER);
         }
 
-        // 4. TELEMETRÍA: Reportar el estado consolidado
-        _telemetry.send(currentState, diagnosis);
+        // 4. TELEMETRÍA: Reportar el estado consolidado (solo cada 30s para reducir ruido)
+        if (currentMillis - _lastTelemetry >= TELEMETRY_INTERVAL) {
+            _lastTelemetry = currentMillis;
+            _telemetry.send(currentState, diagnosis);
+        }
     }
 }
