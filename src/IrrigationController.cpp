@@ -11,18 +11,27 @@ IrrigationController::IrrigationController(
     _waterLevelSensor(pinWaterLevel),
     _waterPump(pinWaterPump),
     _fertilizerPump(pinFertilizerPump),
-    _lastTick(0) {}
+    _lastTick(0),
+    _lastTelemetry(0) {}
 
 void IrrigationController::begin() {
     // Inicializar todo el hardware registrado
+    // Se intercala yield() entre cada sensor para alimentar el watchdog
     _moistureSensor.begin();
+    yield();
     _fertilitySensor.begin();
+    yield();
     _tempSensor.begin();
+    yield();
     _dhtSensor.begin();
+    yield();
     _waterLevelSensor.begin();
+    yield();
     
     _waterPump.begin();
+    yield();
     _fertilizerPump.begin();
+    yield();
     _telemetry.begin();
 }
 

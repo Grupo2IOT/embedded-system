@@ -24,13 +24,14 @@ IrrigationController controller(
 void setup() {
     // Abrimos consola serial para debugear
     Serial.begin(115200);
-    delay(1000);
+    delay(3000); // Allow time to open serial monitor before boot messages
     Serial.println("[SYSTEM START] Inicializando AquaEdge Core...");
     
     // Inicializa todo el pipeline de componentes
     controller.begin();
     
     Serial.println("[SYSTEM READY] Orquestador corriendo de forma asíncrona.");
+    Serial.println("[INFO] Modo dry-flash: sensores desconectados son normales en Phase 1.");
 }
 
 void loop() {

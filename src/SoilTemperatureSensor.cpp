@@ -3,19 +3,34 @@
 // Usamos la lista de inicialización para asociar el pin físico con la instancia de OneWire
 // Luego, le pasamos esa instancia de OneWire a la librería de DallasTemperature
 SoilTemperatureSensor::SoilTemperatureSensor(uint8_t sensorPin) 
-    : BaseSensor(sensorPin), oneWireInstance(sensorPin), dallasSensor(&oneWireInstance) {}
+    : BaseSensor(sensorPin), oneWireInstance(sensorPin), dallasSensor(&oneWireInstance), _initialized(false) {}
 
 void SoilTemperatureSensor::begin() {
     // Inicializa el bus OneWire y configura la resolución interna del chip (9 a 12 bits)
     dallasSensor.begin();
-    
+    yield(); // Feed watchdog during bus scan
+
+    // Si no hay dispositivos en el bus (dry flash / sensor desconectado), evitamos bloqueos
+    if (dallasSensor.getDeviceCount() == 0) {
+        _initialized = false;
+        return;
+    }
+
+    _initialized = true;
     // Opcional: Bajamos la resolución a 10 bits para que la lectura sea más rápida (tarda menos milisegundos)
     // El ESP32 no se quedará esperando colgado tanto tiempo en el ciclo
-    dallasSensor.setWaitForConversion(true); 
+    dallasSensor.setWaitForConversion(true);
 }
 
 SoilTemperatureReading SoilTemperatureSensor::read() {
     SoilTemperatureReading reading;
+
+    // Si no hay dispositivo detectado, evitamos bloquear con requestTemperatures()
+    if (!_initialized) {
+        reading.celsius = 0.0f;
+        reading.isValid = false;
+        return reading;
+    }
 
     // 1. Mandar una orden global al bus: "Todos los chips DS18B20, midan la temperatura ahorita"
     dallasSensor.requestTemperatures();

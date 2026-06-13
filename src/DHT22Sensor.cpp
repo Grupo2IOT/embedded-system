@@ -6,6 +6,7 @@ DHT22Sensor::DHT22Sensor(uint8_t sensorPin)
 
 void DHT22Sensor::begin() {
     dhtInstance.begin();
+    yield(); // Feed watchdog during DHT library init
 }
 
 EnvironmentReading DHT22Sensor::read() {

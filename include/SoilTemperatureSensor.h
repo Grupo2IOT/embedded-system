@@ -11,6 +11,7 @@ private:
     // Creamos las instancias necesarias para gestionar la comunicación digital
     OneWire oneWireInstance;
     DallasTemperature dallasSensor;
+    bool _initialized;
 
 public:
     // Constructor

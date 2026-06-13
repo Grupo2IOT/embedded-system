@@ -4,8 +4,9 @@
 WaterLevelSensor::WaterLevelSensor(uint8_t sensorPin) : BaseSensor(sensorPin) {}
 
 void WaterLevelSensor::begin() {
-    // Configuramos el pin del ESP32 como entrada digital simple
-    pinMode(pin, INPUT);
+    // Configuramos el pin del ESP32 como entrada digital con pull-down interno
+    // Esto evita el pin flotante cuando el interruptor está abierto
+    pinMode(pin, INPUT_PULLDOWN);
 }
 
 WaterLevelReading WaterLevelSensor::read() {
