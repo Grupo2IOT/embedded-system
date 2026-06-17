@@ -53,6 +53,8 @@ Steps:
    - **Fully submerged in water** → this will become your `WATER_VALUE` calibration constant.
 5. Write the recorded values into `include/SoilMoistureSensor.h`.
 
+> **Tip:** Both `SoilMoistureReading` and `SoilFertilityReading` now include a `rawValue` field (0–4095) that is printed in telemetry packets. This makes calibration straightforward — no need for separate debug sketches.
+
 > ⚠️ **Do not skip this phase.** If you add simulation mode before verifying real hardware, you risk validating your evaluator logic against fake data that does not match reality. Phase 2 is the foundation for everything that follows.
 
 > **Tip:** The telemetry packet now prints the raw ADC value alongside the percentage. Use this to verify your sensor is working before you even write the calibration constants.

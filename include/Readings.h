@@ -11,6 +11,7 @@ struct SoilMoistureReading {
 
 struct SoilFertilityReading {
     float conductivity;
+    int rawValue; // ADC crudo (0–4095) para calibración y debugging
     bool isValid; // True si el sensor resistivo YL-69 está conectado
 };
 

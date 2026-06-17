@@ -18,9 +18,9 @@ void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& dia
     }
 
     if (state.soilFertility.isValid) {
-        Serial.print("  > Soil Fertility (EC): "); Serial.print(state.soilFertility.conductivity); Serial.println(" mS/cm");
+        Serial.print("  > Soil Fertility (EC): "); Serial.print(state.soilFertility.conductivity); Serial.print(" mS/cm (raw: "); Serial.print(state.soilFertility.rawValue); Serial.println(")");
     } else {
-        Serial.println("  > Soil Fertility: [HARDWARE_ERROR]");
+        Serial.print("  > Soil Fertility: [HARDWARE_ERROR] (raw: "); Serial.print(state.soilFertility.rawValue); Serial.println(")");
     }
 
     if (state.soilTemperature.isValid) {

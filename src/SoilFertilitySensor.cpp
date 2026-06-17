@@ -12,6 +12,7 @@ SoilFertilityReading SoilFertilitySensor::read() {
 
     // 1. Leer el valor analógico del pin del ESP32 (0 - 4095)
     int rawValue = analogRead(pin);
+    reading.rawValue = rawValue; // Guardar el valor crudo para calibración
 
     // 2. Validación de Hardware contra falsos contactos o desconexión física
     if (rawValue < 200 || rawValue > 4080) {
