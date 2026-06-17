@@ -8,8 +8,8 @@ class SoilMoistureSensor : public BaseSensor {
 private:
     // Valores de calibración típicos para el ADC de 12 bits del ESP32
     // Nota: Estos valores se ajustan con pruebas reales metiendo el sensor en agua y aire
-    const uint16_t AIR_VALUE = 3200;  // Valor crudo en seco (0%)
-    const uint16_t WATER_VALUE = 1500; // Valor crudo en agua (100%)
+    const uint16_t AIR_VALUE = 3120;  // Valor crudo en seco (0%) — calibrado
+    const uint16_t WATER_VALUE = 1070; // Valor crudo en agua (100%) — calibrado
 
 public:
     // Constructor: Pasa el pin a la clase base usando la lista de inicialización
