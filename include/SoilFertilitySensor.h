@@ -10,7 +10,7 @@ private:
     // Se calibran metiendo el sensor en agua destilada (baja fertilidad) 
     // versus agua con fertilizante/compost disuelto (alta fertilidad)
     const uint16_t MAX_RESISTANCE = 4095; // Suelo pobre en nutrientes (Voltaje alto) — calibrado
-    const uint16_t MIN_RESISTANCE = 1500; // Suelo óptimo/saturado de nutrientes (Voltaje bajo) — calibrado con buffer
+    const uint16_t MIN_RESISTANCE = 1400; // Suelo óptimo/saturado de nutrientes (Voltaje bajo) — calibrado con buffer
 
 public:
     // Constructor que delega el pin a BaseSensor

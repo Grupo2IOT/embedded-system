@@ -82,11 +82,21 @@ Add the next sensor only after the previous one is verified and stable.
    - Verify the water pump relay clicks and the pump runs.
    - Re-wet the sensor and verify the pump stops.
 
-## Phase 5: Calibration
+## Phase 5: Calibration ✅
 
-- `SoilMoistureSensor.h` (`AIR_VALUE`, `WATER_VALUE`): already calibrated in Phase 2.
-- `SoilFertilitySensor.h` (`MAX_RESISTANCE`, `MIN_RESISTANCE`): measure in your actual soil. High-resistance = dry soil. Low-resistance = saturated soil.
-- **Important**: The YL-69 cannot distinguish moisture from nutrients in isolation. The `SoilFertilitySensor` value only gets meaning when cross-checked against the HW-390 capacitive moisture reading. If both sensors agree, confidence is high. If they disagree, flag an anomaly.
+### HW-390 (Capacitive Moisture)
+- `AIR_VALUE = 3120` — measured in dry air
+- `WATER_VALUE = 1070` — measured submerged in room-temperature water
+- These values are already written into `include/SoilMoistureSensor.h`
+
+### YL-69 (Resistive / Fertility Proxy)
+- `MAX_RESISTANCE = 4095` — measured in dry air (ADC ceiling)
+- `MIN_RESISTANCE = 1400` — measured in tap water (~1630) with a 230-point buffer for fertilized soil
+- These values are already written into `include/SoilFertilitySensor.h`
+- **Buffer rationale**: Tap water reads ~1444–1630. Setting MIN to 1400 keeps tap water below the maximum EC scale (5.0 mS/cm) and leaves room for fertilizer to lower resistance further. If MIN were set to 1630 (exact tap water), fertilized soil would hit the ceiling and lose resolution.
+
+### Cross-check
+- The YL-69 cannot distinguish moisture from nutrients in isolation. The `SoilFertilitySensor` value only gets meaning when cross-checked against the HW-390 capacitive moisture reading. If both sensors agree, confidence is high. If they disagree, flag an anomaly.
 
 ## Phase 6: Add Simulation Mode (Native ESP32)
 

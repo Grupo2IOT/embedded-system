@@ -23,6 +23,8 @@ This file tracks known issues and planned improvements before hardware deploymen
 
 ## Calibration & Config
 
+- [x] **Calibrate HW-390** — `AIR_VALUE=3120` (dry air), `WATER_VALUE=1070` (room-temp water). Verified in telemetry.
+- [x] **Calibrate YL-69** — `MAX_RESISTANCE=4095` (dry air), `MIN_RESISTANCE=1400` (tap water with 230-point buffer for fertilizer). Verified in telemetry.
 - [ ] **Externalize calibration constants** — `AIR_VALUE`, `WATER_VALUE`, `MAX_RESISTANCE`, and `MIN_RESISTANCE` are hardcoded in headers. Move them to a config struct or persistent storage (e.g., `Preferences` / NVS) so they can be tuned without recompiling.
 
 ## Documentation
