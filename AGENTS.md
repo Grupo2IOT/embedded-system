@@ -58,5 +58,6 @@ Declared in `platformio.ini`:
 - `README.md` — User-facing overview, hardware table, build/run instructions.
 - `docs/GETTING_STARTED.md` — Step-by-step hardware integration guide (dry flash → add one sensor → calibrate → add simulation mode).
 - `docs/hardware.md` — Formal BOM, SKU-to-code mappings, wiring notes (pull-up/down requirements, pin-selection rationale).
+- `docs/edge_architecture.md` — Contract between ESP32 firmware and Python/Flask edge gateway. Defines JSON schema, HTTP endpoints, SQLite schema, tiered authority model, and Phase 2 command transport.
 - `docs/class-diagram.puml` — PlantUML class diagram (Spanish names, English identifiers).
 - `TODO.md` — Active technical-debt checklist before hardware deployment.

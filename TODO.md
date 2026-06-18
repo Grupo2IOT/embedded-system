@@ -27,7 +27,15 @@ This file tracks known issues and planned improvements before hardware deploymen
 - [x] **Calibrate YL-69** — `MAX_RESISTANCE=4095` (dry air), `MIN_RESISTANCE=1400` (tap water with 230-point buffer for fertilizer). Verified in telemetry.
 - [ ] **Externalize calibration constants** — `AIR_VALUE`, `WATER_VALUE`, `MAX_RESISTANCE`, and `MIN_RESISTANCE` are hardcoded in headers. Move them to a config struct or persistent storage (e.g., `Preferences` / NVS) so they can be tuned without recompiling.
 
+## Edge Gateway & Connectivity
+
+- [ ] **Add WiFi + HTTPClient to TelemetryClient** — Replace Serial-only output with `WiFiClient` + `HTTPClient`. POST JSON payload to `EDGE_GATEWAY_URL` every tick. Fire-and-forget: failure must not block the control loop.
+- [ ] **Create `secrets.h` template** — Add `secrets.h.example` to repo with dummy values. Document in README that users must copy it to `secrets.h` and fill in WiFi creds + edge URL.
+- [ ] **Add non-blocking WiFi reconnection** — If `WiFi.status() != WL_CONNECTED`, attempt reconnect in background (e.g., every 30s). Never stall `tick()`.
+- [ ] **Edge gateway: bidirectional command channel (Phase 2)** — Implement `GET /api/v1/commands` polling on ESP32. Parse override commands from edge response. Enforce tiered authority: safety rules (Tier 1) veto edge/user commands. Report command result (executed/rejected + reason) in next telemetry payload. See `docs/edge_architecture.md` Section 11.
+
 ## Documentation
 
 - [x] **Sync class diagram with codebase** — `SensorBH1750`, `LecturaLuz`, and `APAGADO_EMERGENCIA` removed. Diagram now matches the actual firmware and hardware. `docs/hardware.md` created as formal BOM.
 - [x] **README.md accuracy** — YL-69 description updated to reflect "resistivity proxy" rather than pure EC measurement. Second pump confirmed.
+- [x] **Edge architecture document** — Created `docs/edge_architecture.md` with JSON schema, HTTP contract, SQLite schema, tiered authority model, TimescaleDB future note, and Phase 2 command stub.
