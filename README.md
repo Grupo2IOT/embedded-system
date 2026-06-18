@@ -31,11 +31,22 @@ The firmware is split into a 4-layer pipeline:
 1. **Sensors** (`src/*Sensor.cpp`) read hardware and return typed DTOs defined in `include/Readings.h`.
 2. **AgronomicEvaluator** (`src/AgronomicEvaluator.cpp`) receives the full `CropState` and produces an `AgronomicDiagnosis`.
 3. **Actuators** (`src/WaterPump.cpp`, `src/FertilizerPump.cpp`) execute `Command` values from the diagnosis.
-4. **TelemetryClient** (`src/TelemetryClient.cpp`) prints the consolidated state and diagnosis to Serial.
+4. **TelemetryClient** (`src/TelemetryClient.cpp`) sends the consolidated state and diagnosis to the edge gateway via WiFi + HTTP.
 
 `IrrigationController` (`src/IrrigationController.cpp`) orchestrates the pipeline on a non-blocking 5-second tick using `millis()`. The `main.cpp` entry point wires all GPIO pins and starts the loop.
 
 A PlantUML class diagram is available in `docs/class-diagram.puml`.
+
+## Edge Integration
+
+AquaEdge is designed to push telemetry to a **Python/Flask edge gateway** running on the same local network (e.g., a laptop or Raspberry Pi).
+
+- **Transport**: WiFi + HTTP POST (`/api/v1/telemetry`)
+- **Payload**: Nested JSON with sensor readings, raw ADC values, `is_valid` flags, local diagnosis, and actuator state.
+- **Edge storage**: Normalized SQLite schema for fast time-series queries.
+- **Authority model**: Hybrid. The ESP32 enforces safety rules (e.g., no pump if tank is empty) and runs the local evaluator. The edge gateway can issue user overrides, but the device retains veto power over unsafe commands.
+
+For the full contract — JSON schema, HTTP endpoints, SQLite schema, security, and future bidirectional commands — see **`docs/edge_architecture.md`**.
 
 ## Quick start
 
