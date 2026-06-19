@@ -56,6 +56,11 @@ Requirements:
 - [PlatformIO Core](https://platformio.org/install/cli) (or the PlatformIO IDE extension for VS Code)
 - ESP32-DevKit board
 - USB cable to connect the board
+- WiFi network credentials
+
+Setup:
+1. Copy `secrets.h.example` to `secrets.h` and fill in your WiFi credentials and edge gateway URL.
+2. `secrets.h` is gitignored — never commit it.
 
 Build:
 ```bash
