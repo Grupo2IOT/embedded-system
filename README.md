@@ -46,6 +46,9 @@ AquaEdge is designed to push telemetry to a **Python/Flask edge gateway** runnin
 - **Edge storage**: Normalized SQLite schema for fast time-series queries.
 - **Authority model**: Hybrid. The ESP32 enforces safety rules (e.g., no pump if tank is empty) and runs the local evaluator. The edge gateway can issue user overrides, but the device retains veto power over unsafe commands.
 
+**Implementation**: The edge gateway server lives in the sibling [`edge-api/`](../edge-api/) repository. See its `README.md` for setup and run instructions.
+*Don't forget to clone its repo :)*
+
 For the full contract — JSON schema, HTTP endpoints, SQLite schema, security, and future bidirectional commands — see **`docs/edge_architecture.md`**.
 
 ## Quick start
