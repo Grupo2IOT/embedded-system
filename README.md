@@ -56,6 +56,17 @@ Requirements:
 - [PlatformIO Core](https://platformio.org/install/cli) (or the PlatformIO IDE extension for VS Code)
 - ESP32-DevKit board
 - USB cable to connect the board
+- WiFi network credentials
+
+Setup:
+1. Copy `include/secrets.h.example` to `include/secrets.h` and fill in your WiFi credentials and edge gateway URL.
+2. `secrets.h` is gitignored — never commit it.
+
+### Network & Telemetry Modes
+
+By default the firmware attempts to connect to WiFi and POST telemetry to the Flask edge gateway. If you only want Serial output (no network), set `ENABLE_HTTP_TELEMETRY 0` in `secrets.h` before building. This skips WiFi entirely, produces a smaller binary, and is useful for pure hardware testing.
+
+**Phone hotspot** is the recommended way to demo on public/college WiFi. Connect both your laptop (Flask edge) and the ESP32 to the same phone hotspot — they will be on the same subnet and device-to-device traffic is allowed. Use your laptop's IP on the hotspot interface as `EDGE_GATEWAY_URL`.
 
 Build:
 ```bash
@@ -94,12 +105,18 @@ If the water tank is detected as empty, the evaluator immediately disables both 
 ## Project structure
 
 ```
-├── include/          # Header files (DTOs, base classes, interfaces)
-├── src/              # Implementation files and main.cpp entry point
-├── docs/             # PlantUML class diagram
-├── test/             # PlatformIO unit tests (currently empty)
-├── platformio.ini    # PlatformIO project configuration
-└── AGENTS.md         # Guidelines for coding agents (automation context)
+├── include/              # Header files (DTOs, base classes, interfaces)
+│   └── secrets.h.example # WiFi/edge credentials template (copy to secrets.h)
+├── src/                  # Implementation files and main.cpp entry point
+├── docs/                 # Documentation
+│   ├── edge_architecture.md  # HTTP/JSON contract with Flask edge gateway
+│   ├── GETTING_STARTED.md    # Step-by-step hardware integration guide
+│   ├── hardware.md           # BOM, wiring notes, pin rationale
+│   └── class-diagram.puml    # PlantUML class diagram
+├── test/                 # PlatformIO unit tests (currently empty)
+├── platformio.ini        # PlatformIO project configuration
+├── TODO.md               # Active technical-debt checklist
+└── AGENTS.md             # Guidelines for coding agents (automation context)
 ```
 
 ## Dependencies
@@ -108,6 +125,7 @@ Managed by PlatformIO and declared in `platformio.ini`:
 - `paulstoffregen/OneWire@^2.3.8`
 - `milesburton/DallasTemperature@^4.0.6`
 - `adafruit/DHT sensor library@^1.4.7`
+- `bblanchon/ArduinoJson@^7.4.0`
 
 ## Adding new sensors or actuators
 

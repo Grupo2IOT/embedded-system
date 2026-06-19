@@ -29,9 +29,9 @@ This file tracks known issues and planned improvements before hardware deploymen
 
 ## Edge Gateway & Connectivity
 
-- [ ] **Add WiFi + HTTPClient to TelemetryClient** — Replace Serial-only output with `WiFiClient` + `HTTPClient`. POST JSON payload to `EDGE_GATEWAY_URL` every tick. Fire-and-forget: failure must not block the control loop.
-- [ ] **Create `secrets.h` template** — Add `secrets.h.example` to repo with dummy values. Document in README that users must copy it to `secrets.h` and fill in WiFi creds + edge URL.
-- [ ] **Add non-blocking WiFi reconnection** — If `WiFi.status() != WL_CONNECTED`, attempt reconnect in background (e.g., every 30s). Never stall `tick()`.
+- [x] **Add WiFi + HTTPClient to TelemetryClient** — `TelemetryClient` now connects to WiFi, builds nested JSON with ArduinoJson, and POSTs to `EDGE_GATEWAY_URL`. Failure is fire-and-forget; the control loop never blocks.
+- [x] **Create `secrets.h` template** — Added `secrets.h.example` with WiFi creds, edge URL, API key, and device ID. Documented in README.
+- [x] **Add non-blocking WiFi reconnection** — `begin()` attempts connection with 10s timeout. If it fails, `_ensureWiFi()` retries every 30s in the background. `tick()` is never stalled.
 - [ ] **Edge gateway: bidirectional command channel (Phase 2)** — Implement `GET /api/v1/commands` polling on ESP32. Parse override commands from edge response. Enforce tiered authority: safety rules (Tier 1) veto edge/user commands. Report command result (executed/rejected + reason) in next telemetry payload. See `docs/edge_architecture.md` Section 11.
 
 ## Documentation
