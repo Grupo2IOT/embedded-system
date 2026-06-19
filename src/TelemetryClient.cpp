@@ -1,5 +1,6 @@
 #include "TelemetryClient.h"
 #include "secrets.h"
+#include <Arduino.h>
 #include <time.h>
 
 TelemetryClient::TelemetryClient()
@@ -84,10 +85,10 @@ void TelemetryClient::_sendHttp(const String& jsonPayload) {
 }
 
 String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagnosis& diagnosis) {
-    StaticJsonDocument<1024> doc;
+    JsonDocument doc;
 
     // Meta
-    JsonObject meta = doc.createNestedObject("meta");
+    JsonObject meta = doc["meta"].to<JsonObject>();
     meta["device_id"] = DEVICE_ID;
     meta["firmware_version"] = "1.1.0";
     meta["tick_count"] = _tickCount;
@@ -100,36 +101,36 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
     meta["wifi_rssi_dbm"] = WiFi.RSSI();
 
     // Sensors
-    JsonObject sensors = doc.createNestedObject("sensors");
+    JsonObject sensors = doc["sensors"].to<JsonObject>();
 
-    JsonObject soilMoisture = sensors.createNestedObject("soil_moisture");
+    JsonObject soilMoisture = sensors["soil_moisture"].to<JsonObject>();
     soilMoisture["value"] = state.soilMoisture.isValid ? state.soilMoisture.percentage : nullptr;
     soilMoisture["unit"] = "%";
     soilMoisture["raw_adc"] = state.soilMoisture.rawValue;
     soilMoisture["is_valid"] = state.soilMoisture.isValid;
 
-    JsonObject soilFertility = sensors.createNestedObject("soil_fertility");
+    JsonObject soilFertility = sensors["soil_fertility"].to<JsonObject>();
     soilFertility["value"] = state.soilFertility.isValid ? state.soilFertility.conductivity : nullptr;
     soilFertility["unit"] = "mS/cm";
     soilFertility["raw_adc"] = state.soilFertility.rawValue;
     soilFertility["is_valid"] = state.soilFertility.isValid;
 
-    JsonObject soilTemp = sensors.createNestedObject("soil_temperature");
+    JsonObject soilTemp = sensors["soil_temperature"].to<JsonObject>();
     soilTemp["value"] = state.soilTemperature.isValid ? state.soilTemperature.celsius : nullptr;
     soilTemp["unit"] = "C";
     soilTemp["is_valid"] = state.soilTemperature.isValid;
 
-    JsonObject air = sensors.createNestedObject("air");
+    JsonObject air = sensors["air"].to<JsonObject>();
     air["temperature"] = state.environment.isValid ? state.environment.temperature : nullptr;
     air["humidity"] = state.environment.isValid ? state.environment.humidity : nullptr;
     air["is_valid"] = state.environment.isValid;
 
-    JsonObject waterLevel = sensors.createNestedObject("water_level");
+    JsonObject waterLevel = sensors["water_level"].to<JsonObject>();
     waterLevel["status"] = state.waterLevel.status == WaterLevelStatus::EMPTY ? "EMPTY" : "SUFFICIENT";
     waterLevel["is_valid"] = state.waterLevel.isValid;
 
     // Diagnosis
-    JsonObject diag = doc.createNestedObject("diagnosis");
+    JsonObject diag = doc["diagnosis"].to<JsonObject>();
     diag["needs_irrigation"] = diagnosis.requiresIrrigation;
     diag["needs_fertilization"] = diagnosis.requiresFertilization;
     if (diagnosis.alertMessage != nullptr) {
@@ -139,14 +140,14 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
     }
 
     // Actuators (inferred from diagnosis for Phase 1)
-    JsonObject actuators = doc.createNestedObject("actuators");
+    JsonObject actuators = doc["actuators"].to<JsonObject>();
     actuators["water_pump"] = diagnosis.requiresIrrigation ? "ON" : "OFF";
     actuators["fertilizer_pump"] = diagnosis.requiresFertilization ? "ON" : "OFF";
 
     // System health
-    JsonObject health = doc.createNestedObject("system_health");
+    JsonObject health = doc["system_health"].to<JsonObject>();
     int failures = 0;
-    JsonArray failedSensors = health.createNestedArray("failed_sensors");
+    JsonArray failedSensors = health["failed_sensors"].to<JsonArray>();
     if (!state.soilMoisture.isValid)    { failedSensors.add("soil_moisture");    failures++; }
     if (!state.soilFertility.isValid)   { failedSensors.add("soil_fertility");   failures++; }
     if (!state.soilTemperature.isValid) { failedSensors.add("soil_temperature"); failures++; }
@@ -154,7 +155,7 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
     if (!state.waterLevel.isValid)      { failedSensors.add("water_level");      failures++; }
 
     health["overall"] = (failures == 0) ? "HEALTHY" : ((failures >= 3) ? "CRITICAL" : "DEGRADED");
-    health.createNestedArray("pending_commands"); // Phase 2
+    health["pending_commands"].to<JsonArray>(); // Phase 2
 
     String output;
     serializeJson(doc, output);
