@@ -9,6 +9,7 @@ TelemetryClient::TelemetryClient()
       _txFailures(0) {}
 
 void TelemetryClient::begin() {
+#if ENABLE_HTTP_TELEMETRY
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -31,6 +32,9 @@ void TelemetryClient::begin() {
         Serial.println(" TIMEOUT");
         Serial.println("[WIFI] Will retry in background. Local control loop continues.");
     }
+#else
+    Serial.println("[TELEMETRY] HTTP telemetry disabled. Serial output only.");
+#endif
 }
 
 void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& diagnosis) {
@@ -39,6 +43,7 @@ void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& dia
     // Always print to Serial for local debugging
     _printSerial(state, diagnosis);
 
+#if ENABLE_HTTP_TELEMETRY
     // Attempt HTTP POST if WiFi is available
     if (_ensureWiFi()) {
         String payload = _buildJson(state, diagnosis);
@@ -46,8 +51,10 @@ void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& dia
     } else {
         Serial.println("[TELEMETRY] WiFi unavailable — packet dropped (Serial only).");
     }
+#endif
 }
 
+#if ENABLE_HTTP_TELEMETRY
 bool TelemetryClient::_ensureWiFi() {
     if (WiFi.status() == WL_CONNECTED) {
         return true;
@@ -104,25 +111,42 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
     JsonObject sensors = doc["sensors"].to<JsonObject>();
 
     JsonObject soilMoisture = sensors["soil_moisture"].to<JsonObject>();
-    soilMoisture["value"] = state.soilMoisture.isValid ? state.soilMoisture.percentage : nullptr;
+    if (state.soilMoisture.isValid) {
+        soilMoisture["value"] = state.soilMoisture.percentage;
+    } else {
+        soilMoisture["value"] = nullptr;
+    }
     soilMoisture["unit"] = "%";
     soilMoisture["raw_adc"] = state.soilMoisture.rawValue;
     soilMoisture["is_valid"] = state.soilMoisture.isValid;
 
     JsonObject soilFertility = sensors["soil_fertility"].to<JsonObject>();
-    soilFertility["value"] = state.soilFertility.isValid ? state.soilFertility.conductivity : nullptr;
+    if (state.soilFertility.isValid) {
+        soilFertility["value"] = state.soilFertility.conductivity;
+    } else {
+        soilFertility["value"] = nullptr;
+    }
     soilFertility["unit"] = "mS/cm";
     soilFertility["raw_adc"] = state.soilFertility.rawValue;
     soilFertility["is_valid"] = state.soilFertility.isValid;
 
     JsonObject soilTemp = sensors["soil_temperature"].to<JsonObject>();
-    soilTemp["value"] = state.soilTemperature.isValid ? state.soilTemperature.celsius : nullptr;
+    if (state.soilTemperature.isValid) {
+        soilTemp["value"] = state.soilTemperature.celsius;
+    } else {
+        soilTemp["value"] = nullptr;
+    }
     soilTemp["unit"] = "C";
     soilTemp["is_valid"] = state.soilTemperature.isValid;
 
     JsonObject air = sensors["air"].to<JsonObject>();
-    air["temperature"] = state.environment.isValid ? state.environment.temperature : nullptr;
-    air["humidity"] = state.environment.isValid ? state.environment.humidity : nullptr;
+    if (state.environment.isValid) {
+        air["temperature"] = state.environment.temperature;
+        air["humidity"] = state.environment.humidity;
+    } else {
+        air["temperature"] = nullptr;
+        air["humidity"] = nullptr;
+    }
     air["is_valid"] = state.environment.isValid;
 
     JsonObject waterLevel = sensors["water_level"].to<JsonObject>();
@@ -176,6 +200,7 @@ String TelemetryClient::_isoTimestamp() const {
     strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
     return String(buf);
 }
+#endif
 
 void TelemetryClient::_printSerial(const CropState& state, const AgronomicDiagnosis& diagnosis) {
     Serial.println("\n--- [TELEMETRY PACKET] ---");

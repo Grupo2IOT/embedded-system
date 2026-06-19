@@ -59,8 +59,14 @@ Requirements:
 - WiFi network credentials
 
 Setup:
-1. Copy `secrets.h.example` to `secrets.h` and fill in your WiFi credentials and edge gateway URL.
+1. Copy `include/secrets.h.example` to `include/secrets.h` and fill in your WiFi credentials and edge gateway URL.
 2. `secrets.h` is gitignored — never commit it.
+
+### Network & Telemetry Modes
+
+By default the firmware attempts to connect to WiFi and POST telemetry to the Flask edge gateway. If you only want Serial output (no network), set `ENABLE_HTTP_TELEMETRY 0` in `secrets.h` before building. This skips WiFi entirely, produces a smaller binary, and is useful for pure hardware testing.
+
+**Phone hotspot** is the recommended way to demo on public/college WiFi. Connect both your laptop (Flask edge) and the ESP32 to the same phone hotspot — they will be on the same subnet and device-to-device traffic is allowed. Use your laptop's IP on the hotspot interface as `EDGE_GATEWAY_URL`.
 
 Build:
 ```bash
