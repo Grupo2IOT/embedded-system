@@ -66,9 +66,9 @@ Add the next sensor only after the previous one is verified and stable.
 | Sensor | Pin | Prerequisites | Status |
 |--------|-----|---------------|--------|
 | DHT22 | GPIO 26 | Adafruit DHT library installed | ✅ Working (protoboard bridge issue resolved) |
-| DS18B20 | GPIO 25 | OneWire + DallasTemperature libraries, **4.7kΩ pull-up resistor** between data and 3.3V | Next |
-| YL-69 | GPIO 34 | Raw ADC; no libraries | Pending |
-| Float switch (SB-3510LW) | GPIO 27 | Physical pull-down resistor (or `INPUT_PULLDOWN`) | Pending |
+| DS18B20 | GPIO 25 | OneWire + DallasTemperature libraries, **4.7kΩ pull-up resistor** between data and 3.3V | ✅ Working |
+| YL-69 | GPIO 34 | Raw ADC; no libraries | ✅ Calibrated |
+| Float switch (SB-3510LW) | GPIO 27 | Physical pull-down resistor (or `INPUT_PULLDOWN`) | ✅ Configured (hardware not yet connected) |
 
 **Troubleshooting tip:** If a sensor that works alone shows `[HARDWARE_ERROR]` when combined with others, check your **protoboard bridges**. The +/− rails on many protoboards are split in the middle — a missing bridge on the power rail can cause the sensor to appear unconnected even though the data wire is fine.
 
@@ -154,5 +154,6 @@ The `YL-69` / `FC-28` is a **resistive soil moisture sensor**, not a true electr
 
 1. Read `docs/hardware.md` for the full BOM and wiring rationale.
 2. Read `README.md` for the build/run commands and architecture overview.
-3. Read `TODO.md` for code-level improvements (averaging, debouncing, watchdog) that are not blockers for hardware integration.
-4. Proceed to **Phase 3** — add the DS18B20 (soil temperature) with a **4.7kΩ pull-up resistor** on GPIO 25.
+3. Read `docs/edge_architecture.md` for the HTTP/JSON contract if connecting to the Flask edge gateway.
+4. Read `TODO.md` for code-level improvements (averaging, debouncing, watchdog, Phase 2 commands) that are not blockers for hardware integration.
+5. Proceed to **Phase 4** — connect actuators (relays + pumps) for end-to-end testing, or jump to the **edge gateway** integration over WiFi.

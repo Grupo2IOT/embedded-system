@@ -17,7 +17,7 @@
   1. Sensors (`read()`) → DTOs (`Readings.h`)
   2. `AgronomicEvaluator::evaluate()` → `AgronomicDiagnosis`
   3. Actuators (`execute()`) driven by diagnosis
-  4. `TelemetryClient::send()` logs to Serial (115200 baud)
+  4. `TelemetryClient::send()` sends JSON payload to the edge gateway via WiFi + HTTP POST, with Serial (115200 baud) as fallback for local debugging
 - **Critical safety rule**: if `WaterLevelReading.status == EMPTY`, evaluator immediately disables both pumps and short-circuits. Any new logic must preserve this behavior.
 - **Class diagram**: `docs/class-diagram.puml` (PlantUML). Note: diagram names are in Spanish but code uses English identifiers.
 
@@ -52,7 +52,7 @@ Declared in `platformio.ini`:
   - Current values: `AIR_VALUE=3120`, `WATER_VALUE=1070` (HW-390); `MAX_RESISTANCE=4095`, `MIN_RESISTANCE=1400` (YL-69).
   - `MIN_RESISTANCE` is intentionally set below the measured tap-water baseline (~1630) to leave headroom for fertilizer to lower resistance further.
 - **Raw ADC values** are included in the `SoilMoistureReading` DTO (`rawValue` field, 0–4095) and printed in telemetry packets. This is a permanent diagnostic feature, not temporary debug logging.
-- **Serial**: `Serial.begin(115200)` is the only diagnostic output channel right now.
+- **Serial**: `Serial.begin(115200)` is the primary diagnostic output channel. When `ENABLE_HTTP_TELEMETRY` is set to `1`, the device also POSTs JSON telemetry to the configured edge gateway URL.
 
 ## Documentation References
 - `README.md` — User-facing overview, hardware table, build/run instructions.

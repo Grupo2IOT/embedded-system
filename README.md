@@ -105,12 +105,18 @@ If the water tank is detected as empty, the evaluator immediately disables both 
 ## Project structure
 
 ```
-├── include/          # Header files (DTOs, base classes, interfaces)
-├── src/              # Implementation files and main.cpp entry point
-├── docs/             # PlantUML class diagram
-├── test/             # PlatformIO unit tests (currently empty)
-├── platformio.ini    # PlatformIO project configuration
-└── AGENTS.md         # Guidelines for coding agents (automation context)
+├── include/              # Header files (DTOs, base classes, interfaces)
+│   └── secrets.h.example # WiFi/edge credentials template (copy to secrets.h)
+├── src/                  # Implementation files and main.cpp entry point
+├── docs/                 # Documentation
+│   ├── edge_architecture.md  # HTTP/JSON contract with Flask edge gateway
+│   ├── GETTING_STARTED.md    # Step-by-step hardware integration guide
+│   ├── hardware.md           # BOM, wiring notes, pin rationale
+│   └── class-diagram.puml    # PlantUML class diagram
+├── test/                 # PlatformIO unit tests (currently empty)
+├── platformio.ini        # PlatformIO project configuration
+├── TODO.md               # Active technical-debt checklist
+└── AGENTS.md             # Guidelines for coding agents (automation context)
 ```
 
 ## Dependencies
@@ -119,6 +125,7 @@ Managed by PlatformIO and declared in `platformio.ini`:
 - `paulstoffregen/OneWire@^2.3.8`
 - `milesburton/DallasTemperature@^4.0.6`
 - `adafruit/DHT sensor library@^1.4.7`
+- `bblanchon/ArduinoJson@^7.4.0`
 
 ## Adding new sensors or actuators
 
