@@ -10,6 +10,7 @@
 #include "WaterPump.h"
 #include "FertilizerPump.h"
 #include "TelemetryClient.h"
+#include "Types.h"
 
 class IrrigationController {
 private:
@@ -19,12 +20,12 @@ private:
     SoilTemperatureSensor  _tempSensor;
     DHT22Sensor            _dhtSensor;
     WaterLevelSensor       _waterLevelSensor;
-    
+
     AgronomicEvaluator     _evaluador;
-    
+
     WaterPump              _waterPump;
     FertilizerPump         _fertilizerPump;
-    
+
     TelemetryClient        _telemetry;
 
     // Control de Tiempos Asíncronos
@@ -32,6 +33,23 @@ private:
     unsigned long _lastTelemetry;
     const unsigned long TICK_INTERVAL = 5000; // Ejecutar ciclo cada 5 segundos (5000ms)
     const unsigned long TELEMETRY_INTERVAL = 5000; // Reportar telemetría cada 5 segundos
+
+    // Phase 2: Remote override state tracking (fixed-duration commands)
+    struct OverrideState {
+        bool active = false;
+        unsigned long endTime = 0;
+    };
+    OverrideState _waterOverride;
+    OverrideState _fertilizerOverride;
+
+    static constexpr uint8_t MAX_CMD_RESULTS = 4;
+    CommandResult _cmdResults[MAX_CMD_RESULTS];
+    uint8_t _cmdResultCount = 0;
+
+    void _checkOverrideTimeouts(unsigned long now);
+    void _processRemoteCommands(const CropState& state, unsigned long now);
+    void _reportCommandResult(const char* command, bool executed, const char* reason);
+    void _driveActuators(AgronomicDiagnosis& diagnosis, unsigned long now);
 
 public:
     // El constructor recibe los mapeos de pines asignados de todo el sistema
@@ -41,7 +59,7 @@ public:
     );
 
     void begin();
-    
+
     // Método cíclico principal (se invoca en el loop sin bloquear)
     void tick();
 };

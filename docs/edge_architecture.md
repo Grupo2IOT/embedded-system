@@ -91,7 +91,13 @@ The ESP32 sends a single JSON object via HTTP POST. It includes **raw values**, 
   "system_health": {
     "overall": "HEALTHY",
     "failed_sensors": [],
-    "pending_commands": []
+    "pending_commands": [
+      {
+        "command": "water_pump",
+        "executed": true,
+        "reason": "override_active"
+      }
+    ]
   }
 }
 ```
@@ -126,7 +132,7 @@ X-API-Key: <from secrets.h>
 | Status | Meaning | ESP32 behavior |
 |--------|---------|----------------|
 | `204 No Content` | Success, no commands pending | Continue normal loop |
-| `200 OK` + body | Success, commands included (Phase 2) | Parse and queue commands |
+| `200 OK` + `{"commands": [...]}` | Success, commands queued by edge/user | Parse and queue commands for next tick |
 | `400 Bad Request` | JSON malformed or validation failed | Log error, increment `tx_failures`, continue |
 | `401 Unauthorized` | API key mismatch | Log error, continue |
 | `500 Server Error` | Edge crashed | Log error, continue |
@@ -183,8 +189,9 @@ CREATE TABLE telemetry (
     fertilizer_pump_state   TEXT,
 
     -- Health
-    system_health_overall   TEXT,
-    failed_sensors_json     TEXT  -- JSON array, e.g. ["soil_temperature"]
+    system_health_overall    TEXT,
+    failed_sensors_json      TEXT,  -- JSON array, e.g. ["soil_temperature"]
+    pending_commands_json    TEXT   -- JSON array of command results
 );
 
 -- Indexes for fast queries
@@ -314,35 +321,53 @@ const char* API_KEY = "your-secret-key";
 
 ---
 
-## 11. Future: Bidirectional Commands (Phase 2 — Not Yet Implemented)
+## 11. Bidirectional Commands (Phase 2 — Piggybacked)
 
-**Goal**: Allow the edge / user to send commands and config updates to the ESP32.
+**Goal**: Allow the edge / user to send commands to the ESP32.
 
-**Transport**: HTTP polling. ESP32 adds a `GET /api/v1/commands` request every N ticks (e.g., every 30 seconds, or piggybacked on telemetry POST responses).
+**Transport**: **Piggybacking on the telemetry POST response.** Instead of a separate polling request, the edge gateway returns `200 OK` with a JSON body when commands are queued. If no commands are pending, it returns `204 No Content` as before. This avoids extra HTTP round-trips and keeps the ESP32 code minimal.
 
-**Example edge response (200 OK body):**
+**Edge response when commands are queued (200 OK):**
 ```json
 {
   "commands": [
     {
-      "id": "cmd-42",
-      "type": "OVERRIDE_PUMP",
       "target": "water_pump",
       "state": "ON",
-      "duration_sec": 30,
-      "issued_by": "user_dashboard",
-      "issued_at": "2025-06-18T14:31:00Z"
+      "duration_sec": 10
     }
-  ],
-  "config_updates": {
-    "moisture_threshold": 25.0,
-    "telemetry_interval_sec": 10
-  }
+  ]
 }
 ```
 
-**Why HTTP polling and not WebSockets/MQTT?**
-- Simpler on ESP32 — `HTTPClient` is built-in, no extra library.
+**Edge command injection endpoint:**
+```http
+POST /api/v1/command
+Content-Type: application/json
+X-API-Key: <key>
+
+{
+  "device_id": "aquaedge-01",
+  "target": "water_pump",
+  "state": "ON",
+  "duration_sec": 10
+}
+```
+
+Returns `202 Accepted` with `{"status": "queued", ...}`.
+
+**ESP32 behavior:**
+1. After every telemetry POST, if the response is `200`, parse the `commands` array.
+2. On the next control loop tick, process queued commands **before** the evaluator runs.
+3. **Tier 1 safety check**: If `waterLevel.status == EMPTY` **or** `waterLevel.isValid == false`, reject any `ON` command for either pump and report `"SAFETY_VIOLATION: tank_empty"` or `"SAFETY_VIOLATION: water_sensor_invalid"` respectively.
+4. Execute valid commands by setting an override timer (`endTime = now + duration_sec * 1000`).
+5. While the override is active, the actuator stays ON regardless of evaluator output.
+6. When the timer expires, control returns to the evaluator (autopilot).
+7. Report command results (executed/rejected + reason) in the next telemetry packet under `system_health.pending_commands`.
+
+**Why piggybacking instead of polling/WebSockets?**
+- Zero extra HTTP requests — the ESP32 already POSTs every 5s.
+- `HTTPClient` is built-in; no extra libraries.
 - Firewalled networks friendly — outbound HTTP is almost always allowed.
 - Scales to MQTT later — the *payload schema* is the same, only the transport changes.
 

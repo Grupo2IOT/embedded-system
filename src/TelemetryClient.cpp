@@ -6,7 +6,12 @@
 TelemetryClient::TelemetryClient()
     : _tickCount(0),
       _lastWiFiAttempt(0),
-      _txFailures(0) {}
+      _txFailures(0),
+      _pendingCount(0) {
+    for (uint8_t i = 0; i < MAX_PENDING_COMMANDS; ++i) {
+        _pendingCommands[i].valid = false;
+    }
+}
 
 void TelemetryClient::begin() {
 #if ENABLE_HTTP_TELEMETRY
@@ -37,7 +42,8 @@ void TelemetryClient::begin() {
 #endif
 }
 
-void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& diagnosis) {
+void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& diagnosis,
+                           const CommandResult* cmdResults, uint8_t cmdResultCount) {
     _tickCount++;
 
     // Always print to Serial for local debugging
@@ -46,12 +52,31 @@ void TelemetryClient::send(const CropState& state, const AgronomicDiagnosis& dia
 #if ENABLE_HTTP_TELEMETRY
     // Attempt HTTP POST if WiFi is available
     if (_ensureWiFi()) {
-        String payload = _buildJson(state, diagnosis);
+        String payload = _buildJson(state, diagnosis, cmdResults, cmdResultCount);
         _sendHttp(payload);
     } else {
         Serial.println("[TELEMETRY] WiFi unavailable — packet dropped (Serial only).");
     }
 #endif
+}
+
+bool TelemetryClient::hasPendingCommands() const {
+    return _pendingCount > 0;
+}
+
+uint8_t TelemetryClient::pendingCommandCount() const {
+    return _pendingCount;
+}
+
+const RemoteCommand* TelemetryClient::pendingCommands() const {
+    return _pendingCommands;
+}
+
+void TelemetryClient::clearPendingCommands() {
+    _pendingCount = 0;
+    for (uint8_t i = 0; i < MAX_PENDING_COMMANDS; ++i) {
+        _pendingCommands[i].valid = false;
+    }
 }
 
 #if ENABLE_HTTP_TELEMETRY
@@ -78,8 +103,12 @@ void TelemetryClient::_sendHttp(const String& jsonPayload) {
 
     int httpCode = http.POST(jsonPayload);
 
-    if (httpCode == 204 || httpCode == 200) {
-        Serial.println("[TELEMETRY] HTTP POST OK (" + String(httpCode) + ")");
+    if (httpCode == 200) {
+        String response = http.getString();
+        _parseResponse(response);
+        Serial.println("[TELEMETRY] HTTP POST OK (200) — commands received");
+    } else if (httpCode == 204) {
+        Serial.println("[TELEMETRY] HTTP POST OK (204)");
     } else if (httpCode > 0) {
         Serial.println("[TELEMETRY] HTTP POST returned " + String(httpCode));
         _txFailures++;
@@ -91,13 +120,54 @@ void TelemetryClient::_sendHttp(const String& jsonPayload) {
     http.end();
 }
 
-String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagnosis& diagnosis) {
+void TelemetryClient::_parseResponse(const String& responseBody) {
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, responseBody);
+    if (err) {
+        Serial.print("[TELEMETRY] Failed to parse response JSON: ");
+        Serial.println(err.c_str());
+        return;
+    }
+
+    JsonArray commands = doc["commands"];
+    if (commands.isNull()) {
+        return; // No commands field
+    }
+
+    _pendingCount = 0;
+    for (JsonObject cmd : commands) {
+        if (_pendingCount >= MAX_PENDING_COMMANDS) break;
+
+        const char* target = cmd["target"];
+        const char* state = cmd["state"];
+        uint16_t duration = cmd["duration_sec"] | 10; // Default 10s if not specified
+
+        if (target && state) {
+            RemoteCommand& rc = _pendingCommands[_pendingCount++];
+            strlcpy(rc.target, target, sizeof(rc.target));
+            strlcpy(rc.state, state, sizeof(rc.state));
+            rc.durationSec = duration;
+            rc.valid = true;
+
+            Serial.print("[COMMAND] Received: ");
+            Serial.print(rc.target);
+            Serial.print(" -> ");
+            Serial.print(rc.state);
+            Serial.print(" for ");
+            Serial.print(rc.durationSec);
+            Serial.println("s");
+        }
+    }
+}
+
+String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagnosis& diagnosis,
+                                   const CommandResult* cmdResults, uint8_t cmdResultCount) {
     JsonDocument doc;
 
     // Meta
     JsonObject meta = doc["meta"].to<JsonObject>();
     meta["device_id"] = DEVICE_ID;
-    meta["firmware_version"] = "1.1.0";
+    meta["firmware_version"] = "1.2.0";
     meta["tick_count"] = _tickCount;
     String ts = _isoTimestamp();
     if (ts == "null") {
@@ -163,7 +233,7 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
         diag["alert_message"] = nullptr;
     }
 
-    // Actuators (inferred from diagnosis for Phase 1)
+    // Actuators (actual state, may differ from diagnosis if override is active)
     JsonObject actuators = doc["actuators"].to<JsonObject>();
     actuators["water_pump"] = diagnosis.requiresIrrigation ? "ON" : "OFF";
     actuators["fertilizer_pump"] = diagnosis.requiresFertilization ? "ON" : "OFF";
@@ -179,7 +249,16 @@ String TelemetryClient::_buildJson(const CropState& state, const AgronomicDiagno
     if (!state.waterLevel.isValid)      { failedSensors.add("water_level");      failures++; }
 
     health["overall"] = (failures == 0) ? "HEALTHY" : ((failures >= 3) ? "CRITICAL" : "DEGRADED");
-    health["pending_commands"].to<JsonArray>(); // Phase 2
+
+    // Phase 2: command results
+    JsonArray pendingCmds = health["pending_commands"].to<JsonArray>();
+    for (uint8_t i = 0; i < cmdResultCount; ++i) {
+        if (!cmdResults[i].valid) continue;
+        JsonObject cr = pendingCmds.add<JsonObject>();
+        cr["command"] = cmdResults[i].command;
+        cr["executed"] = cmdResults[i].executed;
+        cr["reason"] = cmdResults[i].reason;
+    }
 
     String output;
     serializeJson(doc, output);
