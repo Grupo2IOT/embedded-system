@@ -18,7 +18,8 @@
   2. `AgronomicEvaluator::evaluate()` → `AgronomicDiagnosis`
   3. Actuators (`execute()`) driven by diagnosis
   4. `TelemetryClient::send()` sends JSON payload to the edge gateway via WiFi + HTTP POST, with Serial (115200 baud) as fallback for local debugging
-- **Critical safety rule**: if `WaterLevelReading.status == EMPTY`, evaluator immediately disables both pumps and short-circuits. Any new logic must preserve this behavior.
+  5. **Phase 2**: `TelemetryClient` parses `200 OK` response bodies for `{"commands": [...]}`, queues them in `RemoteCommand` structs, and `IrrigationController` processes them before the evaluator runs on the next tick.
+- **Critical safety rule**: if `WaterLevelReading.status == EMPTY` **or** `WaterLevelReading.isValid == false`, both evaluator and remote command handler immediately disable both pumps. Any new logic must preserve this behavior.
 - **Class diagram**: `docs/class-diagram.puml` (PlantUML). Note: diagram names are in Spanish but code uses English identifiers.
 
 ## Adding Components
@@ -48,6 +49,7 @@ Declared in `platformio.ini`:
 ## Hardware Notes
 - **GPIO mapping** is centralized in `src/main.cpp`. Do not scatter pin numbers across classes.
 - **Current assignments** (see also `docs/hardware.md`): water pump GPIO 14, fertilizer pump GPIO 13. Both are safe outputs (not strapping pins). GPIO 12 was previously used but has been moved because it is a strapping pin.
+- **Relay logic**: The 2-channel relay module is **active-LOW**. `digitalWrite(pin, LOW)` energizes the relay coil → pump ON. `digitalWrite(pin, HIGH)` de-energizes → pump OFF. Both `WaterPump` and `FertilizerPump` handle this automatically.
 - **ADC calibration constants** live in sensor headers (`AIR_VALUE`, `WATER_VALUE`, `MAX_RESISTANCE`, `MIN_RESISTANCE`). These are device-specific and require physical calibration.
   - Current values: `AIR_VALUE=3120`, `WATER_VALUE=1070` (HW-390); `MAX_RESISTANCE=4095`, `MIN_RESISTANCE=1400` (YL-69).
   - `MIN_RESISTANCE` is intentionally set below the measured tap-water baseline (~1630) to leave headroom for fertilizer to lower resistance further.

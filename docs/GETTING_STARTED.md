@@ -72,15 +72,21 @@ Add the next sensor only after the previous one is verified and stable.
 
 **Troubleshooting tip:** If a sensor that works alone shows `[HARDWARE_ERROR]` when combined with others, check your **protoboard bridges**. The +/− rails on many protoboards are split in the middle — a missing bridge on the power rail can cause the sensor to appear unconnected even though the data wire is fine.
 
-## Phase 4: Add Actuators
+## Phase 4: Add Actuators ✅
 
 1. Connect the 2-channel relay module to **GPIO 14** (water pump) and **GPIO 13** (fertilizer pump).
-2. Connect the pumps.
+   - Relay module VCC → ESP32 **5V**
+   - Relay module GND → ESP32 **GND**
+   - Relay module IN1 → **GPIO 14**
+   - Relay module IN2 → **GPIO 13**
+   - **Important**: The relay is **active-LOW** — `digitalWrite(pin, LOW)` energizes the coil and turns the pump ON. The firmware handles this automatically.
+2. Connect the pumps to the relay's switched output (COM + NO). Pumps must be powered by a **separate supply** (e.g., batteries + step-down), NOT from the ESP32 GPIO.
 3. Run an end-to-end test:
    - Let the soil dry (or hold the HW-390 in air).
    - Verify the evaluator triggers irrigation.
    - Verify the water pump relay clicks and the pump runs.
    - Re-wet the sensor and verify the pump stops.
+4. Test remote commands via the edge gateway dashboard (Phase 2).
 
 ## Phase 5: Calibration ✅
 
@@ -154,6 +160,7 @@ The `YL-69` / `FC-28` is a **resistive soil moisture sensor**, not a true electr
 
 1. Read `docs/hardware.md` for the full BOM and wiring rationale.
 2. Read `README.md` for the build/run commands and architecture overview.
-3. Read `docs/edge_architecture.md` for the HTTP/JSON contract if connecting to the Flask edge gateway.
-4. Read `TODO.md` for code-level improvements (averaging, debouncing, watchdog, Phase 2 commands) that are not blockers for hardware integration.
-5. Proceed to **Phase 4** — connect actuators (relays + pumps) for end-to-end testing, or jump to the **edge gateway** integration over WiFi.
+3. Read `docs/edge_architecture.md` for the HTTP/JSON contract and bidirectional command details.
+4. Read `TODO.md` for code-level improvements (ADC averaging, float switch debouncing, watchdog in `tick()`) that are not blockers for hardware integration.
+5. Open the edge gateway dashboard at `http://<laptop-ip>:5000/` to view real-time telemetry and send override commands.
+6. Run the full demo: dry the HW-390 → autopilot triggers water pump → dashboard shows state → click "Force Fertilizer 10s" → observe override behavior.

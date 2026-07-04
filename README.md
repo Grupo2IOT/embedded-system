@@ -8,6 +8,7 @@ AquaEdge is an ESP32-based smart irrigation controller that monitors soil and en
 - Evaluates the crop state every 5 seconds.
 - Automatically turns the water and/or fertilizer pumps on or off based on thresholds.
 - Prevents pumps from running if the water tank is empty (hard safety short-circuit).
+- **Receives remote override commands** from the Flask edge gateway (e.g., "Force Water 10s") via piggybacked HTTP responses, with fixed-duration timers and Tier 1 safety enforcement.
 - Streams telemetry readings and diagnoses over Serial at 115200 baud.
 
 ## Hardware
@@ -19,8 +20,8 @@ AquaEdge is an ESP32-based smart irrigation controller that monitors soil and en
 | DS18B20 soil temperature | GPIO 25 (OneWire) | Soil temperature | Primary |
 | DHT22 | GPIO 26 | Air temperature & humidity | Primary |
 | Water level float switch | GPIO 27 | Tank level (digital) | Primary |
-| Water pump relay | GPIO 14 | Water pump on/off | Safe digital output |
-| Fertilizer pump relay | GPIO 13 | Fertilizer pump on/off | Safe digital output |
+| Water pump relay | GPIO 14 | Water pump on/off | Safe digital output, **active-LOW** |
+| Fertilizer pump relay | GPIO 13 | Fertilizer pump on/off | Safe digital output, **active-LOW** |
 
 Board: **ESP32-DevKit** (see `platformio.ini` for exact environment).
 
@@ -31,9 +32,9 @@ The firmware is split into a 4-layer pipeline:
 1. **Sensors** (`src/*Sensor.cpp`) read hardware and return typed DTOs defined in `include/Readings.h`.
 2. **AgronomicEvaluator** (`src/AgronomicEvaluator.cpp`) receives the full `CropState` and produces an `AgronomicDiagnosis`.
 3. **Actuators** (`src/WaterPump.cpp`, `src/FertilizerPump.cpp`) execute `Command` values from the diagnosis.
-4. **TelemetryClient** (`src/TelemetryClient.cpp`) sends the consolidated state and diagnosis to the edge gateway via WiFi + HTTP.
+4. **TelemetryClient** (`src/TelemetryClient.cpp`) sends the consolidated state and diagnosis to the edge gateway via WiFi + HTTP POST, and **parses piggybacked remote commands** from the HTTP response body.
 
-`IrrigationController` (`src/IrrigationController.cpp`) orchestrates the pipeline on a non-blocking 5-second tick using `millis()`. The `main.cpp` entry point wires all GPIO pins and starts the loop.
+`IrrigationController` (`src/IrrigationController.cpp`) orchestrates the pipeline on a non-blocking 5-second tick using `millis()`. It also manages **fixed-duration override timers**: when a remote command arrives, the corresponding pump runs for the commanded duration regardless of evaluator output, then automatically reverts to autopilot. The `main.cpp` entry point wires all GPIO pins and starts the loop.
 
 A PlantUML class diagram is available in `docs/class-diagram.puml`.
 
@@ -44,12 +45,14 @@ AquaEdge is designed to push telemetry to a **Python/Flask edge gateway** runnin
 - **Transport**: WiFi + HTTP POST (`/api/v1/telemetry`)
 - **Payload**: Nested JSON with sensor readings, raw ADC values, `is_valid` flags, local diagnosis, and actuator state.
 - **Edge storage**: Normalized SQLite schema for fast time-series queries.
-- **Authority model**: Hybrid. The ESP32 enforces safety rules (e.g., no pump if tank is empty) and runs the local evaluator. The edge gateway can issue user overrides, but the device retains veto power over unsafe commands.
+- **Authority model**: Hybrid. The ESP32 enforces safety rules (e.g., no pump if tank is empty or water sensor is invalid) and runs the local evaluator. The edge gateway can issue user overrides, but the device retains veto power over unsafe commands.
+- **Bidirectional commands (Phase 2)**: The edge gateway queues commands and delivers them piggybacked in the `200 OK` response to the ESP32's telemetry POST. Commands include a fixed duration (e.g., 10s). The ESP32 executes them immediately, rejects unsafe ones, and reports results in the next telemetry packet.
+- **Dashboard**: The edge gateway serves an auto-updating web dashboard at `http://<laptop-ip>:5000/` for real-time monitoring and manual override.
 
 **Implementation**: The edge gateway server lives in the sibling [`edge-api/`](../edge-api/) repository. See its `README.md` for setup and run instructions.
 *Don't forget to clone its repo :)*
 
-For the full contract — JSON schema, HTTP endpoints, SQLite schema, security, and future bidirectional commands — see **`docs/edge_architecture.md`**.
+For the full contract — JSON schema, HTTP endpoints, SQLite schema, security, and bidirectional command details — see **`docs/edge_architecture.md`**.
 
 ## Quick start
 
@@ -104,6 +107,10 @@ The ADC-based sensors (soil moisture and fertility) use device-specific constant
 ## Safety
 
 If the water tank is detected as empty, the evaluator immediately disables both pumps and short-circuits the evaluation loop. This behavior is mandatory and must be preserved by any modifications.
+
+Remote override commands are subject to the same Tier 1 safety interlocks:
+- If the water tank is **EMPTY**, any remote command to turn a pump **ON** is rejected.
+- If the water level sensor is **invalid / disconnected**, any remote command to turn a pump **ON** is also rejected (cannot verify safety).
 
 ## Project structure
 

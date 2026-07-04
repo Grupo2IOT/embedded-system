@@ -29,13 +29,45 @@ This document lists every physical component used by the AquaEdge firmware.
 
 | SKU | Description | Code class | Pin | Role |
 |-----|-------------|------------|-----|------|
-| ARD-RE2 | 2-Channel 5V Relay Module | `WaterPump` + `FertilizerPump` | GPIO 14 (water) / GPIO 13 (fertilizer) | Switches pump power |
+| ARD-RE2 | 2-Channel 5V Relay Module (active-LOW) | `WaterPump` + `FertilizerPump` | GPIO 14 (water) / GPIO 13 (fertilizer) | Switches pump power |
 | RS-SUMERGIBLE | Mini Submersible Pump 3V~6V (x2) | — | — | Pump 1 = Water, Pump 2 = Fertilizer/Nutrients |
+
+### Actuator Wiring (Read This Carefully)
+
+**Relay module → ESP32 (signal & logic power):**
+| Relay Pin | Connect To |
+|-----------|------------|
+| VCC | ESP32 **5V** (powers the relay logic/LEDs, ~20mA) |
+| GND | ESP32 **GND** |
+| IN1 | **GPIO 14** |
+| IN2 | **GPIO 13** |
+
+> **JD-VCC jumper**: The yellow cap on the side of the module should be **ON** (covering the JD-VCC and VCC pins). This is the default and simplest configuration. Do not remove it unless you know what you're doing.
+
+**Relay module → Pumps (switched power):**
+The relay acts as a **switch** in the pump's power line. The pumps get power from your **external battery + step-down supply**, NOT from the ESP32.
+
+```
+Battery + (5V) ───┬────────────────────── Pump (+)
+                  │
+Battery - (GND) ──┼── Relay COM (Common)
+                  │
+                  └── Relay NO (Normally Open) ─── Pump (-)
+```
+
+Repeat for the second pump on the second relay channel.
+
+**Active-LOW logic:**
+- `digitalWrite(pin, LOW)` → relay energizes → pump **ON**
+- `digitalWrite(pin, HIGH)` → relay de-energizes → pump **OFF**
+
+The firmware (`WaterPump.cpp`, `FertilizerPump.cpp`) handles this automatically.
 
 ### Actuator Warnings
 
 - GPIO 14 and 13 are safe digital outputs. The previous GPIO 12 (strapping pin) assignment has been corrected. See `TODO.md`.
-- The relay module should be powered by an external 5V supply, not the ESP32 3.3V rail, if driving pumps directly.
+- **The ESP32 does NOT power the pumps.** Pumps draw too much current and will brown-out the ESP32. Always use a separate power supply (e.g., lithium batteries + step-down to 5V) for the pumps.
+- **The relay module VCC goes to ESP32 5V** (not 3.3V). The relay logic circuitry needs 5V to reliably trigger. The current draw is small (~20mA per channel) and safe for the ESP32's 5V regulator.
 
 ## Not in this prototype
 
@@ -52,8 +84,8 @@ These notes explain why specific pins were chosen and what physical requirements
 - **GPIO 26 → DHT22**: Standard digital pin, stable for the Adafruit single-wire protocol.
 - **GPIO 25 → DS18B20**: OneWire bus. Requires an **external 4.7kΩ pull-up resistor** between the data line and 3.3V. Without this, the Dallas Temperature library returns `-127°C` (no device detected).
 - **GPIO 27 → Float switch (SB-3510LW)**: Simple digital input. Configure with a **physical pull-down resistor** (or `INPUT_PULLDOWN` in software) to prevent the pin from floating when the switch is open.
-- **GPIO 14 → Water pump relay**: Safe digital output. Not a strapping pin; does not interfere with ESP32 boot.
-- **GPIO 13 → Fertilizer pump relay**: Safe digital output. Not a strapping pin.
+- **GPIO 14 → Water pump relay (IN1)**: Safe digital output. Not a strapping pin; does not interfere with ESP32 boot. Signal is **active-LOW**.
+- **GPIO 13 → Fertilizer pump relay (IN2)**: Safe digital output. Not a strapping pin. Signal is **active-LOW**.
 
 ## Full wiring reference
 
