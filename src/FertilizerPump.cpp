@@ -4,14 +4,17 @@ FertilizerPump::FertilizerPump(uint8_t actuatorPin) : BaseActuator(actuatorPin) 
 
 void FertilizerPump::begin() {
     pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW); // Aseguramos que la bomba inicie apagada
+    // Relay module is ACTIVE-LOW: HIGH = relay de-energized = pump OFF
+    digitalWrite(pin, HIGH);
 }
 
 void FertilizerPump::execute(Command cmd) {
     if (cmd == Command::TURN_ON_FERTILIZER) {
-        digitalWrite(pin, HIGH); // Activa el relé de fertilizante
-    } 
+        // ACTIVE-LOW: LOW energizes the relay coil → pump ON
+        digitalWrite(pin, LOW);
+    }
     else if (cmd == Command::TURN_OFF_FERTILIZER || cmd == Command::NONE) {
-        digitalWrite(pin, LOW);  // Apaga la bomba de fertilizante
+        // HIGH de-energizes the relay coil → pump OFF
+        digitalWrite(pin, HIGH);
     }
 }
